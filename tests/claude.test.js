@@ -2,8 +2,7 @@ const { test, describe, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const { EventEmitter } = require('events');
 
-// Mock child_process.spawn before requiring claude.js
-const { spawn } = require('child_process');
+const { runClaude } = require('../src/claude');
 
 function makeMockProc({ stdout = '', exitCode = 0, errorMessage = null }) {
   const proc = new EventEmitter();
@@ -16,7 +15,7 @@ function makeMockProc({ stdout = '', exitCode = 0, errorMessage = null }) {
       proc.emit('error', new Error(errorMessage));
     } else {
       proc.stdout.emit('data', Buffer.from(stdout));
-      proc.emit('close', exitCode);
+      proc.emit('close', exitCode, null);
     }
   });
 
@@ -28,8 +27,6 @@ describe('runClaude', () => {
     mock.method(require('child_process'), 'spawn', () =>
       makeMockProc({ stdout: '  Hello!\n' })
     );
-    delete require.cache[require.resolve('../src/claude')];
-    const { runClaude } = require('../src/claude');
     const result = await runClaude('User: Hi');
     assert.equal(result, 'Hello!');
     mock.restoreAll();
@@ -39,8 +36,6 @@ describe('runClaude', () => {
     mock.method(require('child_process'), 'spawn', () =>
       makeMockProc({ exitCode: 1 })
     );
-    delete require.cache[require.resolve('../src/claude')];
-    const { runClaude } = require('../src/claude');
     await assert.rejects(runClaude('User: Hi'), /exited with code 1/);
     mock.restoreAll();
   });
@@ -49,8 +44,6 @@ describe('runClaude', () => {
     mock.method(require('child_process'), 'spawn', () =>
       makeMockProc({ errorMessage: 'ENOENT' })
     );
-    delete require.cache[require.resolve('../src/claude')];
-    const { runClaude } = require('../src/claude');
     await assert.rejects(runClaude('User: Hi'), /ENOENT/);
     mock.restoreAll();
   });

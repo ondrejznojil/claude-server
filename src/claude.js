@@ -1,10 +1,8 @@
-const { spawn } = require('child_process');
-
 const TIMEOUT_MS = 120000; // 2 minutes
 
 async function runClaude(prompt) {
   return new Promise((resolve, reject) => {
-    const proc = spawn('claude', ['--print'], {
+    const proc = require('child_process').spawn('claude', ['--print'], {
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
@@ -21,17 +19,18 @@ async function runClaude(prompt) {
     }
 
     const timer = setTimeout(() => {
-      proc.kill();
+      proc.kill('SIGKILL');
       settle(() => reject(new Error('claude timed out after 2 minutes')));
     }, TIMEOUT_MS);
 
     proc.stdout.on('data', (data) => { stdout += data.toString(); });
     proc.stderr.on('data', (data) => { stderr += data.toString(); });
 
-    proc.on('close', (code) => {
+    proc.on('close', (code, signal) => {
       settle(() => {
         if (code !== 0) {
-          reject(new Error(`claude exited with code ${code}: ${stderr.trim()}`));
+          const detail = signal ? `killed by signal ${signal}` : `code ${code}: ${stderr.trim()}`;
+          reject(new Error(`claude exited with ${detail}`));
         } else {
           resolve(stdout.trim());
         }
