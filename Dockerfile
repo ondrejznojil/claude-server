@@ -1,10 +1,10 @@
 FROM node:20-alpine
 
-# Install bash (needed for entrypoint) and curl (for potential debugging)
-RUN apk add --no-cache bash curl
+# Install bash (needed for entrypoint)
+RUN apk add --no-cache bash
 
-# Install Claude Code CLI globally
-RUN npm install -g @anthropic-ai/claude-code
+# Install Claude Code CLI globally (pinned version)
+RUN npm install -g @anthropic-ai/claude-code@2.1.80
 
 WORKDIR /app
 
