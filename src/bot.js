@@ -1,5 +1,14 @@
 require('dotenv').config();
 
+// ── Validate required env vars at startup ────────────────────────────────────
+const REQUIRED_ENV = ['DISCORD_TOKEN', 'DISCORD_CHANNEL_ID', 'DISCORD_GUILD_ID'];
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    console.error(`Missing required env var: ${key}`);
+    process.exit(1);
+  }
+}
+
 const {
   Client,
   GatewayIntentBits,
@@ -56,30 +65,38 @@ const client = new Client({
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  const commands = [
-    new SlashCommandBuilder()
-      .setName('new')
-      .setDescription('Reset your conversation context with Claude')
-      .toJSON()
-  ];
+  try {
+    const commands = [
+      new SlashCommandBuilder()
+        .setName('new')
+        .setDescription('Reset your conversation context with Claude')
+        .toJSON()
+    ];
 
-  const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-  await rest.put(
-    Routes.applicationGuildCommands(client.user.id, process.env.DISCORD_GUILD_ID),
-    { body: commands }
-  );
-  console.log('Slash commands registered');
+    const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+    await rest.put(
+      Routes.applicationGuildCommands(client.user.id, process.env.DISCORD_GUILD_ID),
+      { body: commands }
+    );
+    console.log('Slash commands registered');
+  } catch (err) {
+    console.error('Failed to register slash commands:', err);
+  }
 });
 
 // Handle /new slash command
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   if (interaction.commandName === 'new') {
-    resetContext(interaction.user.id);
-    await interaction.reply({
-      content: 'Your conversation context has been reset.',
-      ephemeral: true
-    });
+    try {
+      resetContext(interaction.user.id);
+      await interaction.reply({
+        content: 'Your conversation context has been reset.',
+        ephemeral: true
+      });
+    } catch (err) {
+      console.error('Error handling /new interaction:', err);
+    }
   }
 });
 
@@ -96,7 +113,8 @@ client.on('messageCreate', async (message) => {
   const content = message.content.replace(/<@!?\d+>/g, '').trim();
   if (!content) return;
 
-  // Show typing indicator while waiting for Claude
+  // Refresh typing indicator every 9s for responses that take longer than 10s
+  const typingInterval = setInterval(() => message.channel.sendTyping(), 9000);
   await message.channel.sendTyping();
 
   try {
@@ -114,6 +132,8 @@ client.on('messageCreate', async (message) => {
   } catch (err) {
     console.error('Error running claude:', err);
     await message.reply('Something went wrong. Please try again.');
+  } finally {
+    clearInterval(typingInterval);
   }
 });
 
