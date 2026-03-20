@@ -1,0 +1,14 @@
+{
+  "name": "claude-server",
+  "version": "1.0.0",
+  "description": "Discord bot proxying messages to Claude Code CLI",
+  "main": "src/bot.js",
+  "scripts": {
+    "start": "node src/bot.js",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.7"
+  }
+}
