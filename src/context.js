@@ -4,24 +4,30 @@ const path = require('path');
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const MAX_ENTRIES = 40; // 20 turns × 2 (user + assistant)
 
+function safeUserId(userId) {
+  if (!/^\d+$/.test(userId)) throw new Error(`Invalid userId: ${userId}`);
+  return userId;
+}
+
 function historyPath(userId) {
-  return path.join(DATA_DIR, `${userId}.json`);
+  return path.join(DATA_DIR, `${safeUserId(userId)}.json`);
 }
 
 function getHistory(userId) {
   const filePath = historyPath(userId);
   if (!fs.existsSync(filePath)) return [];
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch {
+    return [];
+  }
 }
 
 function appendMessage(userId, role, content) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
   let history = getHistory(userId);
   history.push({ role, content, timestamp: new Date().toISOString() });
   history = history.slice(-MAX_ENTRIES);
-
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
   fs.writeFileSync(historyPath(userId), JSON.stringify(history, null, 2));
 }
 

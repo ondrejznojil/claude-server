@@ -23,12 +23,12 @@ after(() => {
 
 describe('getHistory', () => {
   test('returns empty array for unknown user', () => {
-    assert.deepEqual(getHistory('user1'), []);
+    assert.deepEqual(getHistory('123456789012345678'), []);
   });
 
   test('returns saved history', () => {
-    appendMessage('user1', 'user', 'Hello');
-    const history = getHistory('user1');
+    appendMessage('123456789012345678', 'user', 'Hello');
+    const history = getHistory('123456789012345678');
     assert.equal(history.length, 1);
     assert.equal(history[0].role, 'user');
     assert.equal(history[0].content, 'Hello');
@@ -37,17 +37,17 @@ describe('getHistory', () => {
 
 describe('appendMessage', () => {
   test('saves message with timestamp', () => {
-    appendMessage('user1', 'user', 'Hello');
-    const history = getHistory('user1');
+    appendMessage('123456789012345678', 'user', 'Hello');
+    const history = getHistory('123456789012345678');
     assert.ok(history[0].timestamp);
   });
 
   test('caps history at 40 entries (20 turns)', () => {
     for (let i = 0; i < 25; i++) {
-      appendMessage('user1', 'user', `msg ${i}`);
-      appendMessage('user1', 'assistant', `reply ${i}`);
+      appendMessage('123456789012345678', 'user', `msg ${i}`);
+      appendMessage('123456789012345678', 'assistant', `reply ${i}`);
     }
-    const history = getHistory('user1');
+    const history = getHistory('123456789012345678');
     assert.equal(history.length, 40);
     // Should keep the most recent entries
     assert.equal(history[history.length - 1].content, 'reply 24');
@@ -56,13 +56,13 @@ describe('appendMessage', () => {
 
 describe('resetContext', () => {
   test('deletes user history file', () => {
-    appendMessage('user1', 'user', 'Hello');
-    resetContext('user1');
-    assert.deepEqual(getHistory('user1'), []);
+    appendMessage('123456789012345678', 'user', 'Hello');
+    resetContext('123456789012345678');
+    assert.deepEqual(getHistory('123456789012345678'), []);
   });
 
   test('does not throw if no history exists', () => {
-    assert.doesNotThrow(() => resetContext('unknown-user'));
+    assert.doesNotThrow(() => resetContext('999999999999999999'));
   });
 });
 
