@@ -1,8 +1,10 @@
 #!/bin/bash
 set -e
 
-# Create data directory if it doesn't exist
+# Create required directories if they don't exist
 mkdir -p /app/data
+mkdir -p /workspace
+mkdir -p /root/.ssh
 
 # Write credentials only if the file doesn't already exist
 # (preserves auto-refreshed tokens on restart)
