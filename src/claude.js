@@ -2,7 +2,7 @@ const TIMEOUT_MS = 120000; // 2 minutes
 
 async function runClaude(prompt) {
   return new Promise((resolve, reject) => {
-    const proc = require('child_process').spawn('claude', ['--print'], {
+    const proc = require('child_process').spawn('claude', ['--print', '--dangerously-skip-permissions'], {
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
