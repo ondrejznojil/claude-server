@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
-# Install bash (needed for entrypoint)
-RUN apk add --no-cache bash
+# Install bash (needed for entrypoint) and curl (needed for Coolify health checks)
+RUN apk add --no-cache bash curl
 
 # Install Claude Code CLI globally (pinned version)
 RUN npm install -g @anthropic-ai/claude-code@2.1.80
