@@ -4,7 +4,7 @@ FROM node:20-alpine
 RUN apk add --no-cache bash curl
 
 # Install Claude Code CLI globally (pinned version)
-RUN npm install -g @anthropic-ai/claude-code@2.1.80
+RUN npm install -g @anthropic-ai/claude-code@latest
 
 WORKDIR /app
 
