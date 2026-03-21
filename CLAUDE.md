@@ -33,3 +33,12 @@ The `docs/` directory is your long-term memory. When starting a new context, rea
 When working with Coolify, use .env variables COOLIFY_TOKEN and COOLIFY_URL.
 
 **Do not make any changes in Coolify (API calls, deployments, configuration) unless explicitly asked by the user.**
+
+## Server — Galadriel
+
+The bot runs on the Galadriel server inside a Docker container. Two persistent directories are bind-mounted from the host:
+
+- **`/workspace/`** — shared persistent workspace. Use this for any files you want to persist across container restarts and share between sessions.
+- **`/root/.ssh/`** — SSH keys and config from the host. Gives the bot access to SSH, git over SSH, etc.
+
+These are mounted as bind mounts (not named volumes) in Coolify so the bot can access the real host filesystem paths.
