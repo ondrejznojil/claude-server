@@ -39,6 +39,9 @@ When working with Coolify, use .env variables COOLIFY_TOKEN and COOLIFY_URL.
 The bot runs on the Galadriel server inside a Docker container. Two persistent directories are bind-mounted from the host:
 
 - **`/workspace/`** — shared persistent workspace. Use this for any files you want to persist across container restarts and share between sessions.
-- **`/root/.ssh/`** — SSH keys and config from the host. Gives the bot access to SSH, git over SSH, etc.
+- **`/home/app/.ssh/`** — SSH keys mounted from host's `/root/.ssh/`. Gives the bot access to SSH, git over SSH, etc.
+- **`/home/app/.claude/`** — Claude auth tokens (named volume). Persists across restarts.
+
+The container runs as non-root user `app` (required by `--dangerously-skip-permissions`).
 
 These are mounted as bind mounts (not named volumes) in Coolify so the bot can access the real host filesystem paths.

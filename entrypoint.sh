@@ -2,13 +2,13 @@
 set -e
 
 # Create required directories if they don't exist
-mkdir -p /app/data
-mkdir -p /workspace
-mkdir -p /root/.ssh
+mkdir -p /app/data /workspace /home/app/.ssh /home/app/.claude
+chown -R app:app /app/data /workspace /home/app
 
 # Write credentials only if the file doesn't already exist
 # (preserves auto-refreshed tokens on restart)
-if [ ! -f /root/.claude/.credentials.json ]; then
+CREDS_FILE=/home/app/.claude/.credentials.json
+if [ ! -f "$CREDS_FILE" ]; then
   if [ -n "$CLAUDE_CREDENTIALS" ]; then
     # Validate JSON before writing
     echo "$CLAUDE_CREDENTIALS" | node -e "
@@ -19,8 +19,8 @@ if [ ! -f /root/.claude/.credentials.json ]; then
         catch(e) { console.error('CLAUDE_CREDENTIALS is not valid JSON:', e.message); process.exit(1); }
       });
     "
-    mkdir -p /root/.claude
-    echo "$CLAUDE_CREDENTIALS" > /root/.claude/.credentials.json
+    echo "$CLAUDE_CREDENTIALS" > "$CREDS_FILE"
+    chown app:app "$CREDS_FILE"
     echo "Claude credentials written from CLAUDE_CREDENTIALS env var"
   else
     echo "WARNING: No CLAUDE_CREDENTIALS env var and no existing credentials file. Claude CLI will fail to authenticate."
@@ -29,4 +29,5 @@ else
   echo "Claude credentials file already exists, skipping write"
 fi
 
-exec node /app/src/bot.js
+# Drop to non-root user (required for --dangerously-skip-permissions)
+exec su-exec app node /app/src/bot.js

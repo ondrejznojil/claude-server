@@ -1,10 +1,13 @@
 FROM node:20-alpine
 
-# Install bash (needed for entrypoint) and curl (needed for Coolify health checks)
-RUN apk add --no-cache bash curl
+# Install bash, curl (health checks), su-exec (drop privileges in entrypoint)
+RUN apk add --no-cache bash curl su-exec
 
-# Install Claude Code CLI globally (pinned version)
+# Install Claude Code CLI globally
 RUN npm install -g @anthropic-ai/claude-code@latest
+
+# Create non-root user (required by --dangerously-skip-permissions)
+RUN adduser -D -h /home/app app
 
 WORKDIR /app
 
@@ -20,7 +23,8 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Runtime directories (actual data comes from volumes)
-RUN mkdir -p /root/.claude data
+RUN mkdir -p /home/app/.claude /home/app/.ssh /app/data /workspace \
+    && chown -R app:app /home/app /app/data /workspace
 
 EXPOSE 3000
 
