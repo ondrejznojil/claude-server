@@ -1,6 +1,9 @@
 const TIMEOUT_MS = 120000; // 2 minutes
+const { ensureFreshCredentials } = require('./credentials');
 
 async function runClaude(prompt) {
+  await ensureFreshCredentials();
+
   return new Promise((resolve, reject) => {
     const proc = require('child_process').spawn('claude', ['--print', '--dangerously-skip-permissions'], {
       stdio: ['pipe', 'pipe', 'pipe']
