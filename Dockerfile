@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
 # Install bash, curl (health checks), su-exec (drop privileges in entrypoint)
-RUN apk add --no-cache bash curl su-exec
+RUN apk add --no-cache bash curl su-exec git openssh-client
 
 # Install Claude Code CLI globally
 RUN npm install -g @anthropic-ai/claude-code@latest
