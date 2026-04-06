@@ -1,6 +1,32 @@
-const { test, describe, mock } = require('node:test');
+const { test, describe, mock, before, after } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { EventEmitter } = require('events');
+
+// Write a fresh credentials file before any test so ensureFreshCredentials()
+// finds a valid, non-expired token and returns without making network calls.
+const tmpCredsFile = path.join(os.tmpdir(), `claude-test-creds-${process.pid}.json`);
+
+before(() => {
+  fs.writeFileSync(tmpCredsFile, JSON.stringify({
+    claudeAiOauth: {
+      accessToken: 'sk-ant-test',
+      refreshToken: 'sk-ant-test',
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h from now — always fresh
+      scopes: [],
+      subscriptionType: 'pro',
+      rateLimitTier: 'default_claude_ai',
+    },
+  }));
+  process.env.CLAUDE_CREDS_FILE = tmpCredsFile;
+});
+
+after(() => {
+  fs.rmSync(tmpCredsFile, { force: true });
+  delete process.env.CLAUDE_CREDS_FILE;
+});
 
 const { runClaude } = require('../src/claude');
 
