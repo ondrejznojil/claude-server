@@ -29,5 +29,14 @@ else
   echo "Claude credentials file already exists, skipping write"
 fi
 
+# Copy SSH keys from root mount to app user's .ssh (root can't be accessed by app user)
+if [ -d /root/.ssh ] && [ "$(ls -A /root/.ssh 2>/dev/null)" ]; then
+  cp -r /root/.ssh/. /home/app/.ssh/
+  chown -R app:app /home/app/.ssh
+  chmod 700 /home/app/.ssh
+  find /home/app/.ssh -type f -exec chmod 600 {} \;
+  echo "SSH keys copied to /home/app/.ssh"
+fi
+
 # Drop to non-root user (required for --dangerously-skip-permissions)
 exec su-exec app node /app/src/bot.js
