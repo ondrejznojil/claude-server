@@ -130,7 +130,10 @@ describe('ensureFreshCredentials', () => {
     };
 
     const { ensureFreshCredentials } = require('../src/credentials');
-    // Patch setTimeout to skip 2s delay
+    // Patch setTimeout to skip the 2s retry delay.
+    // Note: this also makes the AbortController's 10s timer fire immediately,
+    // so mock fetch functions in these tests must NOT have any async delay —
+    // the abort timer would fire and override the expected error.
     const origSetTimeout = globalThis.setTimeout;
     globalThis.setTimeout = (fn, _delay) => origSetTimeout(fn, 0);
     try {
@@ -166,6 +169,10 @@ describe('ensureFreshCredentials', () => {
 
     const { ensureFreshCredentials } = require('../src/credentials');
     const origSetTimeout = globalThis.setTimeout;
+    // Patch setTimeout to skip the 2s retry delay.
+    // Note: this also makes the AbortController's 10s timer fire immediately,
+    // so mock fetch functions in these tests must NOT have any async delay —
+    // the abort timer would fire and override the expected error.
     globalThis.setTimeout = (fn, _delay) => origSetTimeout(fn, 0);
     try {
       await assert.rejects(ensureFreshCredentials(), /Token refresh failed: 503/);
@@ -173,6 +180,24 @@ describe('ensureFreshCredentials', () => {
       globalThis.setTimeout = origSetTimeout;
     }
     assert.equal(calls, 2);
+  });
+
+  it('does NOT retry on timeout', async () => {
+    writeCredsFile(credsFile, { expiresAt: Date.now() - 1 });
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls++;
+      // Simulate a hanging request that triggers the AbortController
+      await new Promise((_, reject) => setTimeout(() => {
+        const err = new Error('Token refresh timed out');
+        err.name = 'AbortError';
+        reject(err);
+      }, 0));
+    };
+
+    const { ensureFreshCredentials } = require('../src/credentials');
+    await assert.rejects(ensureFreshCredentials(), /Token refresh timed out/);
+    assert.equal(calls, 1, 'should not retry on timeout');
   });
 
   it('concurrent calls share a single in-flight promise (no duplicate requests)', async () => {
